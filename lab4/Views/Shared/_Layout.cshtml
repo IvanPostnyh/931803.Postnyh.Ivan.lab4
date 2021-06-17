@@ -6,26 +6,27 @@
     <title>@ViewData["Title"] - Backend4</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/ControlsStyleSheet.css" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom box-shadow mb-3" style="background-color:#222222">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand text-white-50" asp-area="" asp-controller="Home" asp-action="Index">Backend4</a>
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Backend4</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-white-50" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-white-50" asp-area="" asp-controller="Mockups" asp-action="Index">Mockups</a>
+                            <a class="nav-link text-light" asp-area="" asp-controller="Mockups" asp-action="Mockups">Mockups</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-white-50" asp-area="" asp-controller="Controls" asp-action="Index">Controls</a>
+                            <a class="nav-link text-light" asp-area="" asp-controller="Controls" asp-action="Controls">Controls</a>
                         </li>
                     </ul>
                 </div>
@@ -33,13 +34,12 @@
         </nav>
     </header>
     <div class="container">
-
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top">
+    <footer class="text-muted border-top">
         <div class="container">
             &copy; 2021 - Backend4
         </div>
@@ -47,7 +47,6 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
-    @await RenderSectionAsync("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

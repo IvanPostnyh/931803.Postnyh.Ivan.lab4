@@ -1,118 +1,168 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Mail;
 using System.Threading.Tasks;
-using Backend4.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-namespace Backend4.Controllers
+using Microsoft.AspNetCore.Mvc.Rendering;
+using MimeKit;
+using MailKit.Net.Smtp;
+using Lab4.Models;
+using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Crypto.Tls;
+using Org.BouncyCastle.Ocsp;
+
+namespace Lab4.Controllers
 {
     public class MockupsController : Controller
     {
-        Random rnd = new Random();
+        public MockupsController()
+        {
 
-        public IActionResult Index()
+        }
+        public IActionResult Mockups()
         {
             return View();
         }
-        [AcceptVerbs("GET", "POST")]
-        public IActionResult CheckEmail(string email)
+
+        [HttpGet]
+        public IActionResult Reset(string code)
         {
-            if (IdentityMap.Get().ContainsKey(email))
-                return Json(false);
-            return Json(true);
+            return View();
         }
+
+        public IActionResult ResetVerify(string Code, string Email)
+        {
+            if (Request.Method == "GET")
+                return View();
+            string newcode = AccountData.GetResetCode(Email);
+            if (Code == newcode)
+            {
+                return RedirectToAction("ChangePassword", new { Email = Email });
+            }
+            ViewData["letter"] = "Wrong code  " + Code + " " + newcode;
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ChangePassword( string Email)
+        {
+            return View();
+        }
+        [HttpPost]
+        public IActionResult ChangePassword(string Password, string Email)
+        {
+            ViewData["Change"] ="  |  "+Email+" | " + AccountData.setNewPassword(Email, Password);
+            return View();
+        }
+
+
+        [HttpPost]
+        public IActionResult Reset(string Email, string Code)
+        {
+            string resetcode = AccountData.GetResetCode(Email);
+            if (resetcode == "0")
+            {
+                ViewData["EmailError"] = "Email does not exist";
+                return View();
+            }
+            if (Code != "I have a code")
+            {
+                var letter = SendEmail(Email, "Verify code", resetcode);
+                ViewData["letter"] = letter;
+            }
+            ViewData["Email"] = ""+Email;
+            ViewBag.Email = "" + Email;
+            return RedirectToAction("ResetVerify", new { Email = Email  });
+        }
+
         [HttpGet]
         public IActionResult SignUp()
         {
+            SetViewBagDayMonthsYear();
             return View();
         }
         [HttpPost]
-        public IActionResult SignUp(Auth a)
+        public IActionResult SignUp(AccountData AD)
         {
-            if (ModelState["FirstName"].ValidationState == ModelValidationState.Valid &
-                ModelState["LastName"].ValidationState == ModelValidationState.Valid &
-                ModelState["Gender"].ValidationState == ModelValidationState.Valid)
-                return RedirectToAction("SignUp2", a);
-            return View();
-        }
-        [HttpGet]
-        public IActionResult SignUp2()
-        {
-            return View();
-        }
-        [HttpPost]
-        public IActionResult SignUp2(Auth a)
-        {
-
-            if (ModelState["Email"].ValidationState == ModelValidationState.Valid &
-                ModelState["Password"].ValidationState == ModelValidationState.Valid &
-                ModelState["ConfirmPassword"].ValidationState == ModelValidationState.Valid)
+            SetViewBagDayMonthsYear();
+            if (ModelState["FirstName"].ValidationState == (ModelValidationState)2 &
+                ModelState["LastName"].ValidationState == (ModelValidationState)2 &
+                ModelState["Gender"].ValidationState == (ModelValidationState)2)
             {
-                if (IdentityMap.Get().ContainsKey(a.Email)) return View(a);
-                    IdentityMap.Get().Add(a.Email, a);
-                return View("Result", a);
+                return RedirectToAction("SignUp2Page", AD);
             }
-            return View();
+            return View(AD);
         }
+
         [HttpGet]
-        public IActionResult Reset2()
+        public IActionResult SignUp2Page(AccountData AD)
         {
-            return View();
+            return View(AD);
         }
         [HttpPost]
-        public IActionResult Reset2(Auth a, string myTextbox)
+        public IActionResult SignUp2Page(AccountData AD,
+            string Password1Confrim, string Passwor2Confrim, string Remember)
         {
-
-            if (a.Code == myTextbox)
+            ViewData["EmailConfirm"] = "";
+            if (ModelState["Email"].ValidationState != (ModelValidationState)2)
             {
-                return RedirectToAction("Reset3", a);
-            }
-            ViewBag.Check = "Wrong code";
-            return View(a);
-        }
-        [HttpGet]
-        public IActionResult Reset3()
-        {
-            return View();
-        }
-        [HttpPost]
-        public IActionResult Reset3(Auth a)
-        {
-
-            if (ModelState["Password"].ValidationState == ModelValidationState.Valid &
-                ModelState["ConfirmPassword"].ValidationState == ModelValidationState.Valid)
-                return View("Result2");
-            else View(a);
-
-            return View();
-        }
-        [HttpGet]
-        public IActionResult Reset()
-        {
-            return View();
-        }
-        [HttpPost]
-        public IActionResult Reset(string Email, string action)
-        {
-            Auth a;
-            if (Email==null)
-            {
-                ViewBag.Code = "Вы не ввели email";
+                ViewData["EmailConfirm"] = "Enter the correct email address";
                 return View();
             }
-            if (IdentityMap.Get().TryGetValue(Email, out a))
-              { if (action == "Send me a code")
-                {
-                    string b= Convert.ToString(rnd.Next(0, 10)) + Convert.ToString(rnd.Next(0, 10)) + Convert.ToString(rnd.Next(0, 10)) + Convert.ToString(rnd.Next(0, 10));
-                    ViewBag.Code = b;
-                    IdentityMap.Get()[Email].Code = b;
-                    return View();
-                }
-                else  return RedirectToAction("Reset2", a);
+            if (AD.FindEmail())
+            {
+                ViewData["EmailConfirm"] =""+AD.Email+ "is used";
+                return View();
             }
-            ViewBag.Code = "Вы не зарегистрированы";
-            return View();
+            if (Password1Confrim != Passwor2Confrim ||
+                string.IsNullOrEmpty(Password1Confrim))
+            {
+                ViewData["PasswordConfirm"] = "Passwords do not match or are not specified";
+                return View();
+            }
+            AD.Password = Password1Confrim;
+            AD.SaveAccountData();
+            return RedirectToAction("SignUpCredentials", AD);
+        }
+
+
+        public IActionResult SignUpCredentials(AccountData AD)
+        {
+            return View(AD);
+        }
+        public async Task SendEmail(string Email, string subject, string message)
+        {
+            var emailMessage = new MimeMessage();
+            emailMessage.From.Add(new MailboxAddress("Администрация 4 Лаборатоной", "ha6n@yandex.ru"));
+            emailMessage.To.Add(new MailboxAddress("", Email));
+            emailMessage.Subject = subject;
+            emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
+            {
+                Text = message
+            };
+            using (var client = new MailKit.Net.Smtp.SmtpClient())
+            {
+                await client.ConnectAsync("smtp.yandex.ru", 25, false);
+                await client.AuthenticateAsync("ha6n@yandex.ru", "162534iva");
+                await client.SendAsync(emailMessage);
+                await client.DisconnectAsync(true);
+            }
+        }
+        private void SetViewBagMonths()
+        {
+            AccountData AD = new AccountData();
+            ViewBag.Months = new SelectList(Date_str.Months(), "month"); ;
+        }
+        private void SetViewBagDayMonthsYear()
+        {
+            AccountData AD = new AccountData();
+            ViewBag.Days = new SelectList(Date_str.Days(), "Days");
+            ViewBag.Months = new SelectList(Date_str.Months(), "month"); ;
+            ViewBag.Years = new SelectList(Date_str.Years(), "Years");
         }
     }
 }

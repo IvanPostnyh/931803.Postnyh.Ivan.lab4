@@ -1,15 +1,13 @@
-﻿@model Auth
-@{
-    ViewData["Title"] = "Reset your password";
-
+﻿@{
+    ViewData["Title"] = "Reset Your Password";
 }
+
 <div class="text-left">
-    <h1>@ViewData["Title"]</h1>
+    <h1 class="display-4">@ViewData["Title"]</h1>
+    <form  method="post">
+        <b>Email</b>
+        <p><input type="email" name="Email"><b>@ViewData["EmailError"]</p>
+        <input class ="submit" type ="submit" name="Code"  value="Send me a code" />
+        <input type ="submit" name="Code"  value="I have a code"/>
+    </form>
 </div>
-<form method="post">
-    <div><b>Email</b></div>
-    @Html.TextBox("Email", "") <br />  
-    <input type="submit" name="Action" value="Send me a code" class="btn btn-primary mt-2">
-    <input type="submit" name="Action" value="I have a code" class="btn btn-outline-dark ml-1 mt-2"><br />
-    <h2>@ViewBag.Code</h2>
-</form>

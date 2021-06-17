@@ -1,13 +1,11 @@
-﻿@{
-    ViewData["Title"] = "DropDownList";
-}
+﻿    <div class="text-left">
+        <form runat="server" method="post">
+            <h1 class="display-4">@ViewData["Title"]</h1>
+            <nobr>Text</nobr>
+            <br>
+            @Html.DropDownList("Text", ViewBag.Months as SelectList)
+            <br>
+            <input type="submit" value="Submit" />
+        </form>
+    </div>
 
-<h1>@ViewData["Title"]</h1>
-    <form method="post">
-        <div><b>Month</b></div>
-        @Html.DropDownList("myList",
-        new SelectList(new[] { "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь" } ), "Выбрать")
-        <p>
-            <input type="submit" class="btn btn-outline-dark" value="Submit" />
-        </p>
-    </form>
